@@ -2,6 +2,9 @@
 *.o
 *.a
 *.so
+listen/listen
+dlisten/dlisten
+coatlctl/coatlctl
 
 # Folders
 _obj
