@@ -22,3 +22,11 @@ _testmain.go
 *.exe
 *.test
 *.prof
+profile.cov
+coverage.html
+
+# Emacs backup files
+*~
+
+# Vim backup files
+*.swp
