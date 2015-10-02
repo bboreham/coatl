@@ -26,11 +26,12 @@ type listServiceOpts struct {
 }
 
 func (opts *listServiceOpts) listService(args []string) {
-	backend.ForeachServiceInstance(opts.all, func(name, value string) {
-		fmt.Println(name, value)
-	}, func(name, value string) {
-		fmt.Println("  ", name, value)
-	})
+	printService := func(name, value string) { fmt.Println(name, value) }
+	var printInstance func(name, value string)
+	if opts.all {
+		printInstance = func(name, value string) { fmt.Println("  ", name, value) }
+	}
+	backend.ForeachServiceInstance(printService, printInstance)
 }
 
 func (opts *listServiceOpts) resetService(args []string) {

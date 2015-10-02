@@ -44,8 +44,8 @@ func RemoveAllServices() error {
 	return err
 }
 
-func ForeachServiceInstance(all bool, fs, fi func(string, string)) {
-	r, err := client.Get(data.ServicePath, true, all)
+func ForeachServiceInstance(fs, fi func(string, string)) {
+	r, err := client.Get(data.ServicePath, true, fi != nil)
 	if err != nil {
 		if etcderr, ok := err.(*etcd.EtcdError); ok && etcderr.ErrorCode == 100 {
 			return

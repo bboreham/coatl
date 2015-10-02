@@ -61,7 +61,7 @@ func createInstance(s *service, name string, data string) *instance {
 func initialize() {
 	services = make(map[string]*service)
 	var s *service
-	backend.ForeachServiceInstance(true, func(name, value string) {
+	backend.ForeachServiceInstance(func(name, value string) {
 		s = createService(name)
 		if err := json.Unmarshal([]byte(value), &s.details); err != nil {
 			log.Fatal("Error unmarshalling: ", err)
