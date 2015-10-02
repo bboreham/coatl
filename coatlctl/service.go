@@ -8,7 +8,12 @@ import (
 	"github.com/bboreham/coatl/backend"
 )
 
-func addService(args []string) {
+// example: coatlctl service create --docker-image micro-wiki/pages
+type addServiceOpts struct {
+	dockerImage string
+}
+
+func (opts *addServiceOpts) addService(args []string) {
 	if len(args) != 3 {
 		log.Fatal("Must supply service name, address and port number")
 	}
@@ -17,7 +22,7 @@ func addService(args []string) {
 	if err != nil {
 		log.Fatal("Invalid port number:", err)
 	}
-	backend.AddService(serviceName, args[1], port)
+	backend.AddService(serviceName, args[1], port, opts.dockerImage)
 	fmt.Println("Added service:", serviceName)
 }
 

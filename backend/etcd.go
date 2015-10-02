@@ -22,11 +22,11 @@ func GetService(serviceName string) error {
 	return err
 }
 
-func AddService(serviceName, address string, port int) {
+func AddService(serviceName, address string, port int, image string) {
 	if _, err := client.CreateDir(data.ServicePath+serviceName, 0); err != nil {
 		log.Fatal("Unable to write:", err)
 	}
-	details := data.Service{Address: address, Port: port}
+	details := data.Service{Address: address, Port: port, Image: image}
 	json, err := json.Marshal(&details)
 	if err != nil {
 		log.Fatal("Failed to encode:", err)
