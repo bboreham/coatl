@@ -17,6 +17,11 @@ func SetupBackend() {
 	client = etcd.NewClient(machines)
 }
 
+// Hack for quick integration; TODO clean this up
+func SetClient(c *etcd.Client) {
+	client = c
+}
+
 func GetService(serviceName string) error {
 	_, err := client.Get(data.ServicePath+serviceName, false, false)
 	return err
