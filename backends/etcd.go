@@ -3,6 +3,7 @@ package backends
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/bboreham/coatl/data"
@@ -15,7 +16,11 @@ type Backend struct {
 
 func NewBackend(machines []string) *Backend {
 	if len(machines) == 0 {
-		machines = []string{"http://127.0.0.1:4001"}
+		etcd_address := os.Getenv("ETCD_ADDRESS")
+		if etcd_address == "" {
+			etcd_address = "http://127.0.0.1:4001"
+		}
+		machines = []string{etcd_address}
 	}
 	backend := &Backend{client: etcd.NewClient(machines)}
 	return backend
