@@ -123,7 +123,7 @@ func (l *Listener) servicePort(container *docker.Container) int {
 	// If there is exactly one port exposed, that's the one.
 	if len(container.NetworkSettings.Ports) == 1 {
 		for portInfo := range container.NetworkSettings.Ports {
-			if val, err := strconv.Atoi(portInfo.Port()); err != nil {
+			if val, err := strconv.Atoi(portInfo.Port()); err == nil {
 				port = val
 			}
 		}
