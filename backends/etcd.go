@@ -21,6 +21,13 @@ func NewBackend(machines []string) *Backend {
 	return backend
 }
 
+// Check if we can talk to etcd
+func (b *Backend) Ping() error {
+	rr := etcd.NewRawRequest("GET", "version", nil, nil)
+	_, err := b.client.SendRequest(rr)
+	return err
+}
+
 func (b *Backend) CheckRegisteredService(serviceName string) error {
 	_, err := b.client.Get(data.ServicePath+serviceName, false, false)
 	return err
