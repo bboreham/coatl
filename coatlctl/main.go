@@ -21,7 +21,7 @@ var serviceCmd = &cobra.Command{
 func setupCommands() {
 	aso := &addServiceOpts{}
 	add := addCommand(serviceCmd, "add <name> <address> <port>", "Register a new service", aso.addService)
-	add.Flags().StringVar(&aso.dockerImage, "-docker-image", "", "Docker image that implements this service")
+	add.Flags().StringVar(&aso.dockerImage, "docker-image", "", "Docker image that implements this service")
 
 	lso1 := &listServiceOpts{}
 	reset := addCommand(serviceCmd, "reset <name>|-a", "Clear out data for a service or all services", lso1.resetService)
