@@ -11,7 +11,7 @@ func enrol(args []string) {
 		log.Fatal("Usage: coatlctl enrol <service> <instance> <address> <port>")
 	}
 	serviceName, instance := args[0], args[1]
-	if err := backend.GetService(serviceName); err != nil {
+	if err := backend.CheckRegisteredService(serviceName); err != nil {
 		log.Fatal("Cannot find service '", serviceName, "':", err)
 	}
 	port, err := strconv.Atoi(args[3])
