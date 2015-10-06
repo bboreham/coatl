@@ -33,10 +33,11 @@ func NewListener(dc *docker.Client) *Listener {
 		containers: make(map[string]*docker.Container),
 	}
 	listener.readInServices()
+	listener.readExistingContainers()
 	return listener
 }
 
-// Read in all info on services
+// Read in all info on registered services
 func (l *Listener) readInServices() {
 	var s *service
 	l.backend.ForeachServiceInstance(func(name, value string) {
@@ -46,6 +47,21 @@ func (l *Listener) readInServices() {
 			log.Fatal("Error unmarshalling: ", err)
 		}
 	}, nil)
+}
+
+// Read details of all running containers
+func (l *Listener) readExistingContainers() {
+	conts, err := l.dc.ListContainers(docker.ListContainersOptions{})
+	if err != nil {
+		log.Fatal("Unable to query existing containers:", err)
+	}
+	for _, cont := range conts {
+		container, err := l.dc.InspectContainer(cont.ID)
+		if err != nil {
+			log.Fatal("Failed to inspect container:", cont.ID, err)
+		}
+		l.containers[cont.ID] = container
+	}
 }
 
 func (l *Listener) Register(container *docker.Container) error {
