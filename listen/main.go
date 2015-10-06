@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/bboreham/coatl/backend"
+	"github.com/bboreham/coatl/backends"
 	"github.com/bboreham/coatl/data"
 	"github.com/spf13/cobra"
 )
@@ -17,8 +17,10 @@ var topCmd = &cobra.Command{
 	Run:   run,
 }
 
+var backend *backends.Backend
+
 func main() {
-	backend.SetupBackend()
+	backend = backends.NewBackend([]string{})
 
 	err := topCmd.Execute()
 	if err != nil {

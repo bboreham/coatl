@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-
-	"github.com/bboreham/coatl/backend"
 )
 
 func enrol(args []string) {

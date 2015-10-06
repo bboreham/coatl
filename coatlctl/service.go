@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-
-	"github.com/bboreham/coatl/backend"
 )
 
 // example: coatlctl service create --docker-image micro-wiki/pages

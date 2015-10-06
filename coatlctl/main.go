@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/bboreham/coatl/backend"
+	"github.com/bboreham/coatl/backends"
 	"github.com/spf13/cobra"
 )
 
@@ -46,8 +46,10 @@ func addCommand(parent *cobra.Command, use, short string, f func(args []string))
 	return &command
 }
 
+var backend *backends.Backend
+
 func main() {
-	backend.SetupBackend()
+	backend = backends.NewBackend([]string{})
 	setupCommands()
 
 	err := topCmd.Execute()

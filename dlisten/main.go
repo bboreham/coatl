@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/bboreham/coatl/backend"
+	"github.com/bboreham/coatl/backends"
 	"github.com/bboreham/coatl/data"
 
 	docker "github.com/fsouza/go-dockerclient"
@@ -49,16 +49,18 @@ func createService(name string) *service {
 func initialize() {
 	services = make(map[string]*service)
 	var s *service
-	backend.ForeachServiceInstance(true, func(name, value string) {
+	backend.ForeachServiceInstance(func(name, value string) {
 		s = createService(name)
 		if err := json.Unmarshal([]byte(value), &s.details); err != nil {
 			log.Fatal("Error unmarshalling: ", err)
 		}
-	}, func(name, value string) {})
+	}, nil)
 }
 
+var backend *backends.Backend
+
 func main() {
-	backend.SetupBackend()
+	backend = backends.NewBackend([]string{})
 	initialize()
 	dc, err := setupDockerClient(dockerPath)
 	if err != nil {
@@ -78,13 +80,13 @@ func main() {
 				if err != nil {
 					log.Fatal("Failed to inspect container:", event.ID, err)
 				}
-				data.AddInstance("foo", container.Name, container.NetworkSettings.IPAddress, 1234)
+				backend.AddInstance("foo", container.Name, container.NetworkSettings.IPAddress, 1234)
 			case "die":
 				container, err := dc.InspectContainer(event.ID)
 				if err != nil {
 					log.Fatal("Failed to inspect container:", event.ID, err)
 				}
-				removeInstance("foo", container.Name)
+				backend.RemoveInstance("foo", container.Name)
 			}
 		}
 	}()
