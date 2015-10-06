@@ -18,7 +18,10 @@ func enrol(args []string) {
 	if err != nil {
 		log.Fatal("Invalid port number: ", err)
 	}
-	backend.AddInstance(serviceName, instance, args[2], port)
+	err = backend.AddInstance(serviceName, instance, args[2], port)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("Enrolled", instance, "in service", serviceName)
 }
 
@@ -27,6 +30,9 @@ func unenrol(args []string) {
 		log.Fatal("Usage: coatlctl unenrol <service> <instance>")
 	}
 	serviceName, instance := args[0], args[1]
-	backend.RemoveInstance(serviceName, instance)
+	err := backend.RemoveInstance(serviceName, instance)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("Un-enrolled", instance, "from service", serviceName)
 }

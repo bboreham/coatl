@@ -20,7 +20,10 @@ func (opts *addServiceOpts) addService(args []string) {
 	if err != nil {
 		log.Fatal("Invalid port number:", err)
 	}
-	backend.AddService(serviceName, args[1], port, opts.dockerImage)
+	err = backend.AddService(serviceName, args[1], port, opts.dockerImage)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("Added service:", serviceName)
 }
 
@@ -34,7 +37,10 @@ func (opts *listServiceOpts) listService(args []string) {
 	if opts.all {
 		printInstance = func(name, value string) { fmt.Println("  ", name, value) }
 	}
-	backend.ForeachServiceInstance(printService, printInstance)
+	err := backend.ForeachServiceInstance(printService, printInstance)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (opts *listServiceOpts) resetService(args []string) {

@@ -2,7 +2,7 @@ package backends
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"strings"
 
 	"github.com/bboreham/coatl/data"
@@ -26,16 +26,17 @@ func (b *Backend) GetService(serviceName string) error {
 	return err
 }
 
-func (b *Backend) AddService(serviceName, address string, port int, image string) {
+func (b *Backend) AddService(serviceName, address string, port int, image string) error {
 	if _, err := b.client.CreateDir(data.ServicePath+serviceName, 0); err != nil {
-		log.Fatal("Unable to write:", err)
+		return fmt.Errorf("Unable to write: %s", err)
 	}
 	details := data.Service{Address: address, Port: port, Image: image}
 	json, err := json.Marshal(&details)
 	if err != nil {
-		log.Fatal("Failed to encode:", err)
+		return fmt.Errorf("Failed to encode: %s", err)
 	}
-	b.client.Set(data.ServicePath+serviceName+"/_details", string(json), 0)
+	_, err = b.client.Set(data.ServicePath+serviceName+"/_details", string(json), 0)
+	return err
 }
 
 func (b *Backend) RemoveService(serviceName string) error {
@@ -48,42 +49,42 @@ func (b *Backend) RemoveAllServices() error {
 	return err
 }
 
-func (b *Backend) ForeachServiceInstance(fs, fi func(string, string)) {
+func (b *Backend) ForeachServiceInstance(fs, fi func(string, string)) error {
 	r, err := b.client.Get(data.ServicePath, true, fi != nil)
 	if err != nil {
 		if etcderr, ok := err.(*etcd.EtcdError); ok && etcderr.ErrorCode == 100 {
-			return
+			return nil
 		}
-		log.Fatal("Failed to get data:", err)
+		return err
 	}
 	for _, node := range r.Node.Nodes {
 		details, err := b.client.Get(node.Key+"/_details", false, false)
 		if err != nil {
-			log.Fatal("Failed to get data:", err)
+			return err
 		}
 		fs(strings.TrimPrefix(node.Key, data.ServicePath), details.Node.Value)
 		for _, instance := range node.Nodes {
 			fi(strings.TrimPrefix(instance.Key, node.Key), instance.Value)
 		}
 	}
+	return nil
 }
 
-func (b *Backend) AddInstance(serviceName, instanceName, address string, port int) {
+func (b *Backend) AddInstance(serviceName, instanceName, address string, port int) error {
 	details := data.Instance{Address: address, Port: port}
 	json, err := json.Marshal(&details)
 	if err != nil {
-		log.Fatal("Failed to encode:", err)
+		return fmt.Errorf("Failed to encode: %s", err)
 	}
 	if _, err := b.client.Set(data.ServicePath+serviceName+"/"+instanceName, string(json), 0); err != nil {
-		log.Fatal("Unable to write:", err)
+		return fmt.Errorf("Unable to write: %s", err)
 	}
+	return nil
 }
 
-func (b *Backend) RemoveInstance(serviceName, instanceName string) {
+func (b *Backend) RemoveInstance(serviceName, instanceName string) error {
 	_, err := b.client.Delete(data.ServicePath+serviceName+"/"+instanceName, true)
-	if err != nil {
-		log.Fatal("Failed to delete:", err)
-	}
+	return err
 }
 
 // Needs work to make less etcd-centric
