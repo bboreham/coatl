@@ -37,5 +37,8 @@ func main() {
 	if err := listener.ReadExistingContainers(); err != nil {
 		log.Fatal("Error reading existing containers:", err)
 	}
+	if err := listener.Sync(); err != nil {
+		log.Fatal("Error synchronising existing containers:", err)
+	}
 	listener.Run(events)
 }

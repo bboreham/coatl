@@ -41,7 +41,7 @@ func (l *Listener) ReadInServices() error {
 		s = &service{name: name}
 		l.services[name] = s
 		if err := json.Unmarshal([]byte(value), &s.details); err != nil {
-			log.Println("Error unmarshalling: ", err)
+			log.Println("Error unmarshalling:", err)
 		}
 	}, nil)
 }
@@ -62,10 +62,27 @@ func (l *Listener) ReadExistingContainers() error {
 	return nil
 }
 
+func (l *Listener) Sync() error {
+	// Register all the ones we know about
+	for _, container := range l.containers {
+		l.Register(container)
+	}
+	// Remove all the ones we don't
+	var serviceName string
+	return l.backend.ForeachServiceInstance(func(name, value string) {
+		serviceName = name
+	}, func(instanceName, value string) {
+		if _, found := l.containers[instanceName]; !found {
+			log.Printf("Removing %.12s/%.12s", serviceName, instanceName)
+			l.backend.RemoveInstance(serviceName, instanceName)
+		}
+	})
+}
+
 func (l *Listener) Register(container *docker.Container) error {
 	service := l.serviceName(container)
 	if err := l.backend.CheckRegisteredService(service); err != nil {
-		log.Println("ignoring ", container.ID, "; service ", service, " not registered")
+		log.Printf("ignoring %.12s; service '%s' not registered", container.ID, service)
 		return nil
 	}
 	err := l.backend.AddInstance(service, container.ID, container.NetworkSettings.IPAddress, l.servicePort(container))

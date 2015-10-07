@@ -75,9 +75,13 @@ func (b *Backend) ForeachServiceInstance(fs, fi func(string, string)) error {
 		if err != nil {
 			return err
 		}
-		fs(strings.TrimPrefix(node.Key, data.ServicePath), details.Node.Value)
-		for _, instance := range node.Nodes {
-			fi(strings.TrimPrefix(instance.Key, node.Key), instance.Value)
+		if fs != nil {
+			fs(strings.TrimPrefix(node.Key, data.ServicePath), details.Node.Value)
+		}
+		if fi != nil {
+			for _, instance := range node.Nodes {
+				fi(strings.TrimPrefix(instance.Key, node.Key+"/"), instance.Value)
+			}
 		}
 	}
 	return nil
