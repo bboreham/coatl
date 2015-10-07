@@ -6,12 +6,8 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
-const (
-	dockerPath = "unix:///var/run/docker.sock"
-)
-
-func setupDockerClient(apiPath string) (*docker.Client, error) {
-	dc, err := docker.NewClient(apiPath)
+func setupDockerClient() (*docker.Client, error) {
+	dc, err := docker.NewClientFromEnv()
 	if err != nil {
 		return nil, err
 	}
@@ -19,12 +15,12 @@ func setupDockerClient(apiPath string) (*docker.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[docker] Using Docker API on %s: %v", apiPath, env)
+	log.Printf("Using Docker %v", env)
 	return dc, nil
 }
 
 func main() {
-	dc, err := setupDockerClient(dockerPath)
+	dc, err := setupDockerClient()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,7 +28,7 @@ func main() {
 
 	events := make(chan *docker.APIEvents)
 	if err := dc.AddEventListener(events); err != nil {
-		log.Fatalf("[docker] Unable to add listener to Docker API: %s", err)
+		log.Fatalf("Unable to add listener to Docker API: %s", err)
 	}
 
 	listener.Run(events)
