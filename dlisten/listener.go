@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -32,49 +31,50 @@ func NewListener(dc *docker.Client) *Listener {
 		services:   make(map[string]*service),
 		containers: make(map[string]*docker.Container),
 	}
-	listener.readInServices()
-	listener.readExistingContainers()
 	return listener
 }
 
 // Read in all info on registered services
-func (l *Listener) readInServices() {
+func (l *Listener) ReadInServices() error {
 	var s *service
-	l.backend.ForeachServiceInstance(func(name, value string) {
+	return l.backend.ForeachServiceInstance(func(name, value string) {
 		s = &service{name: name}
 		l.services[name] = s
 		if err := json.Unmarshal([]byte(value), &s.details); err != nil {
-			log.Fatal("Error unmarshalling: ", err)
+			log.Println("Error unmarshalling: ", err)
 		}
 	}, nil)
 }
 
 // Read details of all running containers
-func (l *Listener) readExistingContainers() {
+func (l *Listener) ReadExistingContainers() error {
 	conts, err := l.dc.ListContainers(docker.ListContainersOptions{})
 	if err != nil {
-		log.Fatal("Unable to query existing containers:", err)
+		return err
 	}
 	for _, cont := range conts {
 		container, err := l.dc.InspectContainer(cont.ID)
 		if err != nil {
-			log.Fatal("Failed to inspect container:", cont.ID, err)
+			log.Println("Failed to inspect container:", cont.ID, err)
 		}
 		l.containers[cont.ID] = container
 	}
+	return nil
 }
 
 func (l *Listener) Register(container *docker.Container) error {
 	service := l.serviceName(container)
 	if err := l.backend.CheckRegisteredService(service); err != nil {
-		return fmt.Errorf("coatl: service not registered: %s", service)
+		log.Println("ignoring ", container.ID, "; service ", service, " not registered")
+		return nil
 	}
 	err := l.backend.AddInstance(service, container.ID, container.NetworkSettings.IPAddress, l.servicePort(container))
 	if err != nil {
 		log.Println("coatl: failed to register service:", err)
+		return err
 	}
 	log.Printf("Registered %s instance %.12s", service, container.ID)
-	return err
+	return nil
 }
 
 func (l *Listener) Deregister(container *docker.Container) error {
@@ -143,7 +143,7 @@ func (l *Listener) Run(events <-chan *docker.APIEvents) {
 		case "start":
 			container, err := l.dc.InspectContainer(event.ID)
 			if err != nil {
-				log.Fatal("Failed to inspect container:", event.ID, err)
+				log.Println("Failed to inspect container:", event.ID, err)
 			}
 			l.containers[event.ID] = container
 			l.Register(container)

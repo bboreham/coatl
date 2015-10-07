@@ -22,7 +22,7 @@ func setupDockerClient() (*docker.Client, error) {
 func main() {
 	dc, err := setupDockerClient()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error connecting to docker: ", err)
 	}
 	listener := NewListener(dc)
 
@@ -31,5 +31,11 @@ func main() {
 		log.Fatalf("Unable to add listener to Docker API: %s", err)
 	}
 
+	if err := listener.ReadInServices(); err != nil {
+		log.Fatal("Error reading configuration: ", err)
+	}
+	if err := listener.ReadExistingContainers(); err != nil {
+		log.Fatal("Error reading existing containers:", err)
+	}
 	listener.Run(events)
 }
