@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bboreham/coatl/data"
+	etcd_errors "github.com/coreos/etcd/error"
 	"github.com/coreos/go-etcd/etcd"
 )
 
@@ -64,7 +65,7 @@ func (b *Backend) RemoveAllServices() error {
 func (b *Backend) ForeachServiceInstance(fs, fi func(string, string)) error {
 	r, err := b.client.Get(data.ServicePath, true, fi != nil)
 	if err != nil {
-		if etcderr, ok := err.(*etcd.EtcdError); ok && etcderr.ErrorCode == 100 {
+		if etcderr, ok := err.(*etcd.EtcdError); ok && etcderr.ErrorCode == etcd_errors.EcodeKeyNotFound {
 			return nil
 		}
 		return err
