@@ -123,6 +123,15 @@ func findOverride(container *docker.Container, key string) (val string, found bo
 	return "", false
 }
 
+func (l *Listener) serviceFromImage(image string) *service {
+	for _, service := range l.services {
+		if image == service.details.Image {
+			return service
+		}
+	}
+	return nil
+}
+
 func (l *Listener) serviceName(container *docker.Container) string {
 	// First choice is just the container name
 	name := strings.TrimPrefix(container.Name, "/")
@@ -131,10 +140,28 @@ func (l *Listener) serviceName(container *docker.Container) string {
 		name = val
 	}
 	// If this is a service that has been registered against a specific image name, override
-	for serviceName, service := range l.services {
-		if container.Image == service.details.Image {
-			name = serviceName
-			break
+
+	// To map from the container hex ID to a human-readable name
+	// (tag), we need to fetch every name and map backwards.
+	// Apparently.
+	images, err := l.dc.ListImages(docker.ListImagesOptions{})
+	if err == nil {
+		for _, image := range images {
+			if image.ID == container.Image {
+				if service := l.serviceFromImage(image.ID); service != nil {
+					return service.name
+				}
+				for _, tag := range image.RepoTags {
+					if service := l.serviceFromImage(tag); service != nil {
+						return service.name
+					}
+					if strings.HasSuffix(tag, ":latest") {
+						if service := l.serviceFromImage(strings.TrimSuffix(tag, ":latest")); service != nil {
+							return service.name
+						}
+					}
+				}
+			}
 		}
 	}
 	return name

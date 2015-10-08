@@ -62,6 +62,14 @@ func (b *Backend) RemoveAllServices() error {
 	return err
 }
 
+func (b *Backend) GetServiceDetails(serviceName string) (string, error) {
+	details, err := b.client.Get(data.ServicePath+serviceName+"/_details", false, false)
+	if err != nil {
+		return "", err
+	}
+	return details.Node.Value, nil
+}
+
 func (b *Backend) ForeachServiceInstance(fs, fi func(string, string)) error {
 	r, err := b.client.Get(data.ServicePath, true, fi != nil)
 	if err != nil {
@@ -71,18 +79,34 @@ func (b *Backend) ForeachServiceInstance(fs, fi func(string, string)) error {
 		return err
 	}
 	for _, node := range r.Node.Nodes {
-		details, err := b.client.Get(node.Key+"/_details", false, false)
+		serviceName := strings.TrimPrefix(node.Key, data.ServicePath)
+		serviceInfo, err := b.GetServiceDetails(serviceName)
 		if err != nil {
 			return err
 		}
 		if fs != nil {
-			fs(strings.TrimPrefix(node.Key, data.ServicePath), details.Node.Value)
+			fs(serviceName, serviceInfo)
 		}
 		if fi != nil {
 			for _, instance := range node.Nodes {
 				fi(strings.TrimPrefix(instance.Key, node.Key+"/"), instance.Value)
 			}
 		}
+	}
+	return nil
+}
+
+func (b *Backend) ForeachInstance(serviceName string, fi func(string, string)) error {
+	serviceKey := data.ServicePath + serviceName + "/"
+	r, err := b.client.Get(serviceKey, true, false)
+	if err != nil {
+		if etcderr, ok := err.(*etcd.EtcdError); ok && etcderr.ErrorCode == etcd_errors.EcodeKeyNotFound {
+			return nil
+		}
+		return err
+	}
+	for _, instance := range r.Node.Nodes {
+		fi(strings.TrimPrefix(instance.Key, serviceKey), instance.Value)
 	}
 	return nil
 }
