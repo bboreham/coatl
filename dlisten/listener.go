@@ -85,7 +85,12 @@ func (l *Listener) Register(container *docker.Container) error {
 		log.Printf("ignoring %.12s; service '%s' not registered", container.ID, service)
 		return nil
 	}
-	err := l.backend.AddInstance(service, container.ID, container.NetworkSettings.IPAddress, l.servicePort(container))
+	port := l.servicePort(container)
+	if port == 0 {
+		log.Printf("coatl: cannot find port for instance %.12s", container.ID)
+		return nil
+	}
+	err := l.backend.AddInstance(service, container.ID, container.NetworkSettings.IPAddress, port)
 	if err != nil {
 		log.Println("coatl: failed to register service:", err)
 		return err
