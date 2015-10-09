@@ -56,7 +56,7 @@ func (l *Listener) run() {
 	}, nil)
 
 	for r := range ch {
-		log.Println(r.Action, r.Node)
+		// log.Println(r.Action, r.Node)
 		serviceName, _, err := data.DecodePath(r.Node.Key)
 		if err != nil {
 			log.Println(err)
