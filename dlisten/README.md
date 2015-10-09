@@ -18,3 +18,8 @@ The port number is:
  - if the container docker-exposes exactly one port, then that is taken
  - if it has an environment variable or label `SERVICE_PORT`, then that overrides
  - otherwise, the port configured for the service
+
+To run inside a Docker container:
+
+    docker build -t dlisten .
+    docker run -d -e ETCD_ADDRESS=http://etcd:4001 -v /var/run/docker.sock:/var/run/docker.sock dlisten
