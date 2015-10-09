@@ -17,3 +17,4 @@ The port number is:
 
  - if the container docker-exposes exactly one port, then that is taken
  - if it has an environment variable `SERVICE_PORT`, then that overrides
+ - otherwise, the port configured for the service

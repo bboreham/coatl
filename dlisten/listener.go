@@ -65,7 +65,7 @@ func (l *Listener) Sync() error {
 	var serviceName string
 	return l.backend.ForeachServiceInstance(func(name string, _ data.Service) {
 		serviceName = name
-	}, func(instanceName, value string) {
+	}, func(instanceName string, _ data.Instance) {
 		if _, found := l.containers[instanceName]; !found {
 			log.Printf("Removing %.12s/%.12s", serviceName, instanceName)
 			l.backend.RemoveInstance(serviceName, instanceName)
@@ -74,17 +74,17 @@ func (l *Listener) Sync() error {
 }
 
 func (l *Listener) Register(container *docker.Container) error {
-	service := l.serviceName(container)
-	if err := l.backend.CheckRegisteredService(service); err != nil {
-		log.Printf("ignoring %.12s; service '%s' not registered", container.ID, service)
+	serviceName := l.serviceName(container)
+	service, err := l.backend.GetServiceDetails(serviceName)
+	if err != nil {
+		log.Printf("ignoring %.12s; service '%s' not registered", container.ID, serviceName)
 		return nil
 	}
 	port := l.servicePort(container)
 	if port == 0 {
-		log.Printf("coatl: cannot find port for instance %.12s", container.ID)
-		return nil
+		port = service.Port
 	}
-	err := l.backend.AddInstance(service, container.ID, container.NetworkSettings.IPAddress, port)
+	err = l.backend.AddInstance(serviceName, container.ID, container.NetworkSettings.IPAddress, port)
 	if err != nil {
 		log.Println("coatl: failed to register service:", err)
 		return err
