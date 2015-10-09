@@ -113,7 +113,9 @@ func findOverride(container *docker.Container, key string) (val string, found bo
 			return kvp[1], true
 		}
 	}
-	// Todo: look in labels too
+	if v, found := container.Config.Labels[key]; found {
+		return v, true
+	}
 	return "", false
 }
 
