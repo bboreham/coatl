@@ -38,7 +38,7 @@ func (l *Listener) send(serviceName string) error {
 		}
 		update.ServiceInfo.Instances = append(update.ServiceInfo.Instances, model.MakeInstance(net.ParseIP(instance.Address), instance.Port))
 	})
-	log.Printf("Sending update for %s: %+v\n", update.ServiceKey, update.ServiceInfo)
+	log.Printf("Sending update for %s: %+v\n", update.ServiceKey.String(), update.ServiceInfo)
 	l.updates <- update
 	return nil
 }
