@@ -60,6 +60,11 @@ func (l *Listener) Updates() <-chan model.ServiceUpdate {
 func (l *Listener) run() {
 	ch := l.backend.Watch()
 
+	// Send initial state of each service
+	l.backend.ForeachServiceInstance(func(name, _ string) {
+		l.send(name)
+	}, nil)
+
 	for r := range ch {
 		log.Println(r.Action, r.Node)
 		serviceName, _, err := data.DecodePath(r.Node.Key)
