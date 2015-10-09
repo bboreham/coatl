@@ -45,17 +45,14 @@ type service struct {
 
 var services map[string]*service
 
-func createService(name string) *service {
-	s := &service{name: name, instances: make(map[string]*instance)}
+func createService(name string, details data.Service) *service {
+	s := &service{name: name, details: details, instances: make(map[string]*instance)}
 	services[name] = s
 	return s
 }
 
-func createInstance(s *service, name string, data string) *instance {
-	i := &instance{name: name}
-	if err := json.Unmarshal([]byte(data), &i.details); err != nil {
-		log.Fatal("Error unmarshalling: ", err)
-	}
+func createInstance(s *service, name string, details data.Instance) *instance {
+	i := &instance{name: name, details: details}
 	s.instances[i.name] = i
 	return i
 }
@@ -63,13 +60,10 @@ func createInstance(s *service, name string, data string) *instance {
 func initialize() {
 	services = make(map[string]*service)
 	var s *service
-	backend.ForeachServiceInstance(func(name, value string) {
-		s = createService(name)
-		if err := json.Unmarshal([]byte(value), &s.details); err != nil {
-			log.Fatal("Error unmarshalling: ", err)
-		}
-	}, func(name, value string) {
-		createInstance(s, name, value)
+	backend.ForeachServiceInstance(func(name string, serviceData data.Service) {
+		s = createService(name, serviceData)
+	}, func(name string, instanceData data.Instance) {
+		createInstance(s, name, instanceData)
 	})
 }
 
@@ -91,7 +85,7 @@ func run(cmd *cobra.Command, args []string) {
 		}
 		switch r.Action {
 		case "create":
-			createService(serviceName)
+			createService(serviceName, data.Service{})
 			fmt.Println("Service created:", serviceName, "; there are now", len(services), "services")
 		case "delete":
 			if serviceName == "" {
@@ -123,7 +117,11 @@ func run(cmd *cobra.Command, args []string) {
 				}
 				fmt.Println("Service", s.name, s.details)
 			} else {
-				i := createInstance(s, instanceName, r.Node.Value)
+				var details data.Instance
+				if err := json.Unmarshal([]byte(r.Node.Value), &details); err != nil {
+					log.Fatal("Error unmarshalling: ", err)
+				}
+				i := createInstance(s, instanceName, details)
 				fmt.Println("Instance", i.name, "is now enrolled in", s.name, "which now has", len(s.instances), "instances")
 			}
 		default:

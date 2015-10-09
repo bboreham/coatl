@@ -2,7 +2,6 @@
 package glisten
 
 import (
-	"encoding/json"
 	"log"
 	"net"
 
@@ -18,24 +17,15 @@ type Listener struct {
 }
 
 func (l *Listener) send(serviceName string) error {
-	serviceInfo, err := l.backend.GetServiceDetails(serviceName)
+	service, err := l.backend.GetServiceDetails(serviceName)
 	if err != nil {
-		return err
-	}
-	var service data.Service
-	if err := json.Unmarshal([]byte(serviceInfo), &service); err != nil {
-		log.Println("Error unmarshalling: ", err)
 		return err
 	}
 	update := model.ServiceUpdate{
 		ServiceKey:  model.MakeServiceKey("tcp", net.ParseIP(service.Address), service.Port),
 		ServiceInfo: &model.ServiceInfo{},
 	}
-	l.backend.ForeachInstance(serviceName, func(name, value string) {
-		var instance data.Instance
-		if err := json.Unmarshal([]byte(value), &instance); err != nil {
-			log.Fatal("Error unmarshalling: ", err)
-		}
+	l.backend.ForeachInstance(serviceName, func(name string, instance data.Instance) {
 		update.ServiceInfo.Instances = append(update.ServiceInfo.Instances, model.MakeInstance(net.ParseIP(instance.Address), instance.Port))
 	})
 	log.Printf("Sending update for %s: %+v\n", update.ServiceKey.String(), update.ServiceInfo)
@@ -61,7 +51,7 @@ func (l *Listener) run() {
 	ch := l.backend.Watch()
 
 	// Send initial state of each service
-	l.backend.ForeachServiceInstance(func(name, _ string) {
+	l.backend.ForeachServiceInstance(func(name string, _ data.Service) {
 		l.send(name)
 	}, nil)
 

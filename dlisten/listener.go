@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"strconv"
 	"strings"
@@ -36,13 +35,8 @@ func NewListener(dc *docker.Client) *Listener {
 
 // Read in all info on registered services
 func (l *Listener) ReadInServices() error {
-	var s *service
-	return l.backend.ForeachServiceInstance(func(name, value string) {
-		s = &service{name: name}
-		l.services[name] = s
-		if err := json.Unmarshal([]byte(value), &s.details); err != nil {
-			log.Println("Error unmarshalling:", err)
-		}
+	return l.backend.ForeachServiceInstance(func(name string, value data.Service) {
+		l.services[name] = &service{name: name, details: value}
 	}, nil)
 }
 
@@ -69,7 +63,7 @@ func (l *Listener) Sync() error {
 	}
 	// Remove all the ones we don't
 	var serviceName string
-	return l.backend.ForeachServiceInstance(func(name, value string) {
+	return l.backend.ForeachServiceInstance(func(name string, _ data.Service) {
 		serviceName = name
 	}, func(instanceName, value string) {
 		if _, found := l.containers[instanceName]; !found {

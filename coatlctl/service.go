@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+
+	"github.com/bboreham/coatl/data"
 )
 
 // example: coatlctl service create --docker-image micro-wiki/pages
@@ -32,7 +34,7 @@ type listServiceOpts struct {
 }
 
 func (opts *listServiceOpts) listService(args []string) {
-	printService := func(name, value string) { fmt.Println(name, value) }
+	printService := func(name string, value data.Service) { fmt.Println(name, value) }
 	var printInstance func(name, value string)
 	if opts.all {
 		printInstance = func(name, value string) { fmt.Println("  ", name, value) }

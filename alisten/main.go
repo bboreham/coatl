@@ -3,7 +3,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -22,21 +21,12 @@ func main() {
 const SOCKET = "/var/run/ambergris.sock"
 
 func sendToAmber(serviceName string) error {
-	serviceInfo, err := backend.GetServiceDetails(serviceName)
+	service, err := backend.GetServiceDetails(serviceName)
 	if err != nil {
 		return err
 	}
-	var service data.Service
-	if err := json.Unmarshal([]byte(serviceInfo), &service); err != nil {
-		log.Println("Error unmarshalling: ", err)
-		return err
-	}
 	var instances []data.Instance
-	backend.ForeachInstance(serviceName, func(name, value string) {
-		var instance data.Instance
-		if err := json.Unmarshal([]byte(value), &instance); err != nil {
-			log.Fatal("Error unmarshalling: ", err)
-		}
+	backend.ForeachInstance(serviceName, func(name string, instance data.Instance) {
 		instances = append(instances, instance)
 	})
 	conn, err := net.Dial("unix", SOCKET)

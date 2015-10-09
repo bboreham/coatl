@@ -62,15 +62,19 @@ func (b *Backend) RemoveAllServices() error {
 	return err
 }
 
-func (b *Backend) GetServiceDetails(serviceName string) (string, error) {
+func (b *Backend) GetServiceDetails(serviceName string) (data.Service, error) {
+	var service data.Service
 	details, err := b.client.Get(data.ServicePath+serviceName+"/_details", false, false)
 	if err != nil {
-		return "", err
+		return service, err
 	}
-	return details.Node.Value, nil
+	if err := json.Unmarshal([]byte(details.Node.Value), &service); err != nil {
+		return service, err
+	}
+	return service, nil
 }
 
-func (b *Backend) ForeachServiceInstance(fs, fi func(string, string)) error {
+func (b *Backend) ForeachServiceInstance(fs func(string, data.Service), fi func(string, data.Instance)) error {
 	r, err := b.client.Get(data.ServicePath, true, fi != nil)
 	if err != nil {
 		if etcderr, ok := err.(*etcd.EtcdError); ok && etcderr.ErrorCode == etcd_errors.EcodeKeyNotFound {
@@ -80,23 +84,27 @@ func (b *Backend) ForeachServiceInstance(fs, fi func(string, string)) error {
 	}
 	for _, node := range r.Node.Nodes {
 		serviceName := strings.TrimPrefix(node.Key, data.ServicePath)
-		serviceInfo, err := b.GetServiceDetails(serviceName)
+		serviceData, err := b.GetServiceDetails(serviceName)
 		if err != nil {
 			return err
 		}
 		if fs != nil {
-			fs(serviceName, serviceInfo)
+			fs(serviceName, serviceData)
 		}
 		if fi != nil {
 			for _, instance := range node.Nodes {
-				fi(strings.TrimPrefix(instance.Key, node.Key+"/"), instance.Value)
+				var instanceData data.Instance
+				if err := json.Unmarshal([]byte(instance.Value), &instanceData); err != nil {
+					return err
+				}
+				fi(strings.TrimPrefix(instance.Key, node.Key+"/"), instanceData)
 			}
 		}
 	}
 	return nil
 }
 
-func (b *Backend) ForeachInstance(serviceName string, fi func(string, string)) error {
+func (b *Backend) ForeachInstance(serviceName string, fi func(string, data.Instance)) error {
 	serviceKey := data.ServicePath + serviceName + "/"
 	r, err := b.client.Get(serviceKey, true, false)
 	if err != nil {
@@ -106,7 +114,11 @@ func (b *Backend) ForeachInstance(serviceName string, fi func(string, string)) e
 		return err
 	}
 	for _, instance := range r.Node.Nodes {
-		fi(strings.TrimPrefix(instance.Key, serviceKey), instance.Value)
+		var instanceData data.Instance
+		if err := json.Unmarshal([]byte(instance.Value), &instanceData); err != nil {
+			return err
+		}
+		fi(strings.TrimPrefix(instance.Key, serviceKey), instanceData)
 	}
 	return nil
 }
