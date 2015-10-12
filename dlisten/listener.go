@@ -89,7 +89,7 @@ func (l *Listener) Register(container *docker.Container) error {
 		log.Println("coatl: failed to register service:", err)
 		return err
 	}
-	log.Printf("Registered %s instance %.12s", service, container.ID)
+	log.Printf("Registered %s instance %.12s at %s", serviceName, container.ID, container.NetworkSettings.IPAddress)
 	return nil
 }
 
