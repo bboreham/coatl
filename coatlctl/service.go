@@ -35,9 +35,9 @@ type listServiceOpts struct {
 
 func (opts *listServiceOpts) listService(args []string) {
 	printService := func(name string, value data.Service) { fmt.Println(name, value) }
-	var printInstance func(name, value string)
+	var printInstance func(name string, value data.Instance)
 	if opts.all {
-		printInstance = func(name, value string) { fmt.Println("  ", name, value) }
+		printInstance = func(name string, value data.Instance) { fmt.Println("  ", name, value) }
 	}
 	err := backend.ForeachServiceInstance(printService, printInstance)
 	if err != nil {
