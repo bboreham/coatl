@@ -45,7 +45,7 @@ func (opts *listServiceOpts) listService(args []string) {
 	}
 }
 
-func (opts *listServiceOpts) resetService(args []string) {
+func (opts *listServiceOpts) removeService(args []string) {
 	var err error
 	if opts.all {
 		err = backend.RemoveAllServices()

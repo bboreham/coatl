@@ -24,8 +24,8 @@ func setupCommands() {
 	add.Flags().StringVar(&aso.dockerImage, "docker-image", "", "Docker image that implements this service")
 
 	lso1 := &listServiceOpts{}
-	reset := addCommand(serviceCmd, "reset <name>|-a", "Clear out data for a service or all services", lso1.resetService)
-	reset.Flags().BoolVarP(&lso1.all, "all", "a", false, "clear out all services")
+	remove := addCommand(serviceCmd, "remove <name>|-a", "Clear out data for a service or all services", lso1.removeService)
+	remove.Flags().BoolVarP(&lso1.all, "all", "a", false, "clear out all services")
 
 	lso2 := &listServiceOpts{}
 	list := addCommand(serviceCmd, "list", "List all registered services", lso2.listService)
