@@ -21,5 +21,5 @@ The port number is:
 
 To run inside a Docker container:
 
-    docker build -t dlisten .
+    docker build -t bboreham/dlisten .
     docker run -d -e ETCD_ADDRESS=http://etcd:4001 -v /var/run/docker.sock:/var/run/docker.sock dlisten
