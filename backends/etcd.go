@@ -17,7 +17,13 @@ type Backend struct {
 
 func NewBackend(machines []string) *Backend {
 	if len(machines) == 0 {
-		etcd_address := os.Getenv("ETCD_ADDRESS")
+		etcd_address := os.Getenv("ETCD_PORT")
+		if etcd_address == "" {
+			etcd_address = os.Getenv("ETCD_ADDRESS")
+		}
+		if strings.HasPrefix(etcd_address, "tcp:") {
+			etcd_address = "http:" + etcd_address[4:]
+		}
 		if etcd_address == "" {
 			etcd_address = "http://127.0.0.1:4001"
 		}
