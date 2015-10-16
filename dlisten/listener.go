@@ -50,6 +50,7 @@ func (l *Listener) ReadExistingContainers() error {
 		container, err := l.dc.InspectContainer(cont.ID)
 		if err != nil {
 			log.Println("Failed to inspect container:", cont.ID, err)
+			continue
 		}
 		l.containers[cont.ID] = container
 	}
@@ -78,7 +79,7 @@ func (l *Listener) Register(container *docker.Container) error {
 	service, err := l.backend.GetServiceDetails(serviceName)
 	if err != nil {
 		log.Printf("ignoring %.12s; service '%s' not registered", container.ID, serviceName)
-		return nil
+		return err
 	}
 	port := l.servicePort(container)
 	if port == 0 {
@@ -101,6 +102,7 @@ func (l *Listener) Deregister(container *docker.Container) error {
 	err := l.backend.RemoveInstance(service, container.ID)
 	if err != nil {
 		log.Println("coatl: failed to deregister service:", err)
+		return err
 	}
 	log.Printf("Deregistered %s instance %.12s", service, container.ID)
 	return err
@@ -175,7 +177,7 @@ func (l *Listener) servicePort(container *docker.Container) int {
 	}
 	// If there is an environment variable overriding, use that
 	if val, found := findOverride(container, "SERVICE_PORT"); found {
-		if num, err := strconv.Atoi(val); err != nil {
+		if num, err := strconv.Atoi(val); err == nil {
 			port = num
 		}
 	}
@@ -189,6 +191,7 @@ func (l *Listener) Run(events <-chan *docker.APIEvents) {
 			container, err := l.dc.InspectContainer(event.ID)
 			if err != nil {
 				log.Println("Failed to inspect container:", event.ID, err)
+				continue
 			}
 			l.containers[event.ID] = container
 			l.Register(container)
