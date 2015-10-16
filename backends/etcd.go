@@ -46,15 +46,12 @@ func (b *Backend) CheckRegisteredService(serviceName string) error {
 }
 
 func (b *Backend) AddService(serviceName, address string, port int, image string) error {
-	if _, err := b.client.CreateDir(data.ServicePath+serviceName, 0); err != nil {
-		return fmt.Errorf("Unable to write: %s", err)
-	}
 	details := data.Service{Address: address, Port: port, Image: image}
 	json, err := json.Marshal(&details)
 	if err != nil {
 		return fmt.Errorf("Failed to encode: %s", err)
 	}
-	_, err = b.client.Set(data.ServicePath+serviceName+"/_details", string(json), 0)
+	_, err = b.client.Set(data.ServicePath+serviceName+"/details", string(json), 0)
 	return err
 }
 
@@ -70,7 +67,7 @@ func (b *Backend) RemoveAllServices() error {
 
 func (b *Backend) GetServiceDetails(serviceName string) (data.Service, error) {
 	var service data.Service
-	details, err := b.client.Get(data.ServicePath+serviceName+"/_details", false, false)
+	details, err := b.client.Get(data.ServicePath+serviceName+"/details", false, false)
 	if err != nil {
 		return service, err
 	}
@@ -99,6 +96,9 @@ func (b *Backend) ForeachServiceInstance(fs func(string, data.Service), fi func(
 		}
 		if fi != nil {
 			for _, instance := range node.Nodes {
+				if strings.HasSuffix(instance.Key, "/details") {
+					continue
+				}
 				var instanceData data.Instance
 				if err := json.Unmarshal([]byte(instance.Value), &instanceData); err != nil {
 					return err

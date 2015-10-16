@@ -110,7 +110,7 @@ func run(cmd *cobra.Command, args []string) {
 				log.Println("Service not found:", serviceName)
 				continue
 			}
-			if instanceName == "_details" {
+			if instanceName == "details" {
 				if err := json.Unmarshal([]byte(r.Node.Value), &s.details); err != nil {
 					log.Println("Error unmarshalling: ", err)
 					continue
