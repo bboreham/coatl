@@ -215,6 +215,13 @@ func (l *Listener) Run(events <-chan *docker.APIEvents) {
 				continue
 			}
 			switch {
+			case r.Action == "delete" && serviceName == "":
+				// everything deleted
+				l.services = make(map[string]*service)
+				log.Println("All services deleted")
+			case r.Action == "delete" && instanceName == "":
+				delete(l.services, serviceName)
+				log.Println("Service deleted:", serviceName)
 			case r.Action == "set" && instanceName == "details":
 				s := &service{name: serviceName, details: data.Service{}}
 				if err := json.Unmarshal([]byte(r.Node.Value), &s.details); err != nil {
