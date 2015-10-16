@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"strconv"
 	"strings"
@@ -57,6 +58,7 @@ func (l *Listener) ReadExistingContainers() error {
 	return nil
 }
 
+// TODO: Un-enrol ones that no longer match.  If required.
 func (l *Listener) Sync() error {
 	// Register all the ones we know about
 	for _, container := range l.containers {
@@ -185,23 +187,45 @@ func (l *Listener) servicePort(container *docker.Container) int {
 }
 
 func (l *Listener) Run(events <-chan *docker.APIEvents) {
-	for event := range events {
-		switch event.Status {
-		case "start":
-			container, err := l.dc.InspectContainer(event.ID)
+	backendCh := l.backend.Watch()
+	for {
+		select {
+		case event := <-events:
+			switch event.Status {
+			case "start":
+				container, err := l.dc.InspectContainer(event.ID)
+				if err != nil {
+					log.Println("Failed to inspect container:", event.ID, err)
+					continue
+				}
+				l.containers[event.ID] = container
+				l.Register(container)
+			case "die":
+				container, found := l.containers[event.ID]
+				if !found {
+					log.Println("Unknown container:", event.ID)
+					continue
+				}
+				l.Deregister(container)
+			}
+		case r := <-backendCh:
+			serviceName, instanceName, err := data.DecodePath(r.Node.Key)
 			if err != nil {
-				log.Println("Failed to inspect container:", event.ID, err)
+				log.Println(err)
 				continue
 			}
-			l.containers[event.ID] = container
-			l.Register(container)
-		case "die":
-			container, found := l.containers[event.ID]
-			if !found {
-				log.Println("Unknown container:", event.ID)
-				continue
+			switch {
+			case r.Action == "set" && instanceName == "details":
+				s := &service{name: serviceName, details: data.Service{}}
+				if err := json.Unmarshal([]byte(r.Node.Value), &s.details); err != nil {
+					log.Println("Error unmarshalling: ", err)
+					continue
+				}
+				l.services[serviceName] = &service{name: serviceName, details: data.Service{}}
+				log.Println("Service", s.name, "updated:", s.details)
+				// See if any containers match now.
+				l.Sync()
 			}
-			l.Deregister(container)
 		}
 	}
 }
