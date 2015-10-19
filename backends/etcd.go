@@ -120,6 +120,9 @@ func (b *Backend) ForeachInstance(serviceName string, fi func(string, data.Insta
 		return err
 	}
 	for _, instance := range r.Node.Nodes {
+		if strings.HasSuffix(instance.Key, "/details") {
+			continue
+		}
 		var instanceData data.Instance
 		if err := json.Unmarshal([]byte(instance.Value), &instanceData); err != nil {
 			return err
