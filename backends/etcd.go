@@ -45,8 +45,8 @@ func (b *Backend) CheckRegisteredService(serviceName string) error {
 	return err
 }
 
-func (b *Backend) AddService(serviceName, address string, port int, image string) error {
-	details := data.Service{Address: address, Port: port, Image: image}
+func (b *Backend) AddService(serviceName, address string, port int, protocol, image string) error {
+	details := data.Service{Address: address, Port: port, Protocol: protocol, Image: image}
 	json, err := json.Marshal(&details)
 	if err != nil {
 		return fmt.Errorf("Failed to encode: %s", err)

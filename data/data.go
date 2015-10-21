@@ -6,9 +6,10 @@ import (
 )
 
 type Service struct {
-	Address string `json:"address,omitempty"`
-	Port    int    `json:"port,omitempty"`
-	Image   string `json:"image,omitempty"`
+	Address  string `json:"address,omitempty"`
+	Port     int    `json:"port,omitempty"`
+	Protocol string `json:"protocol,omitempty"`
+	Image    string `json:"image,omitempty"`
 }
 
 type Instance struct {

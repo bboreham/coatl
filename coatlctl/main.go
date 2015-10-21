@@ -22,6 +22,7 @@ func setupCommands() {
 	aso := &addServiceOpts{}
 	add := addCommand(serviceCmd, "add <name> <address> <port>", "Register a new service", aso.addService)
 	add.Flags().StringVar(&aso.dockerImage, "docker-image", "", "Docker image that implements this service")
+	add.Flags().StringVar(&aso.protocol, "protocol", "", "Protocol, e.g. \"http\".  Defaults to simple tcp forwarding")
 
 	lso1 := &listServiceOpts{}
 	remove := addCommand(serviceCmd, "remove <name>|-a", "Clear out data for a service or all services", lso1.removeService)

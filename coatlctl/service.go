@@ -11,6 +11,7 @@ import (
 // example: coatlctl service create --docker-image micro-wiki/pages
 type addServiceOpts struct {
 	dockerImage string
+	protocol    string
 }
 
 func (opts *addServiceOpts) addService(args []string) {
@@ -22,7 +23,7 @@ func (opts *addServiceOpts) addService(args []string) {
 	if err != nil {
 		log.Fatal("Invalid port number:", err)
 	}
-	err = backend.AddService(serviceName, args[1], port, opts.dockerImage)
+	err = backend.AddService(serviceName, args[1], port, opts.protocol, opts.dockerImage)
 	if err != nil {
 		log.Fatal(err)
 	}
