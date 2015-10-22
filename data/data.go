@@ -13,8 +13,9 @@ type Service struct {
 }
 
 type Instance struct {
-	Address string `json:"address,omitempty"`
-	Port    int    `json:"port,omitempty"`
+	Address string            `json:"address,omitempty"`
+	Port    int               `json:"port,omitempty"`
+	Labels  map[string]string `json:"labels"`
 }
 
 const ServicePath = "/weave/service/"
