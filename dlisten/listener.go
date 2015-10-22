@@ -87,7 +87,13 @@ func (l *Listener) Register(container *docker.Container) error {
 	if port == 0 {
 		port = service.Port
 	}
-	err = l.backend.AddInstance(serviceName, container.ID, container.NetworkSettings.IPAddress, port)
+
+	labels := map[string]string{"tag": imageTag(container.Config.Image)}
+	for k, v := range container.Config.Labels {
+		labels[k] = v
+	}
+
+	err = l.backend.AddInstance(serviceName, container.ID, container.NetworkSettings.IPAddress, port, labels)
 	if err != nil {
 		log.Println("coatl: failed to register service:", err)
 		return err
@@ -140,29 +146,8 @@ func (l *Listener) serviceName(container *docker.Container) string {
 		name = val
 	}
 	// If this is a service that has been registered against a specific image name, override
-
-	// To map from the container hex ID to a human-readable name
-	// (tag), we need to fetch every name and map backwards.
-	// Apparently.
-	images, err := l.dc.ListImages(docker.ListImagesOptions{})
-	if err == nil {
-		for _, image := range images {
-			if image.ID == container.Image {
-				if service := l.serviceFromImage(image.ID); service != nil {
-					return service.name
-				}
-				for _, tag := range image.RepoTags {
-					if service := l.serviceFromImage(tag); service != nil {
-						return service.name
-					}
-					if strings.HasSuffix(tag, ":latest") {
-						if service := l.serviceFromImage(strings.TrimSuffix(tag, ":latest")); service != nil {
-							return service.name
-						}
-					}
-				}
-			}
-		}
+	if s := l.serviceFromImage(imageName(container.Config.Image)); s != nil {
+		name = s.name
 	}
 	return name
 }
@@ -235,4 +220,20 @@ func (l *Listener) Run(events <-chan *docker.APIEvents) {
 			}
 		}
 	}
+}
+
+func imageTag(image string) string {
+	colon := strings.LastIndex(image, ":")
+	if colon == -1 {
+		return "latest"
+	}
+	return image[colon:]
+}
+
+func imageName(image string) string {
+	colon := strings.LastIndex(image, ":")
+	if colon == -1 {
+		return image
+	}
+	return image[:colon]
 }

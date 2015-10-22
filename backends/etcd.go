@@ -132,8 +132,8 @@ func (b *Backend) ForeachInstance(serviceName string, fi func(string, data.Insta
 	return nil
 }
 
-func (b *Backend) AddInstance(serviceName, instanceName, address string, port int) error {
-	details := data.Instance{Address: address, Port: port}
+func (b *Backend) AddInstance(serviceName, instanceName, address string, port int, labels map[string]string) error {
+	details := data.Instance{Address: address, Port: port, Labels: labels}
 	json, err := json.Marshal(&details)
 	if err != nil {
 		return fmt.Errorf("Failed to encode: %s", err)
